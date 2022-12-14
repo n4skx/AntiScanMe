@@ -89,15 +89,29 @@ BOOL antiscan_checkNtdll(void *modules) {
                         foundHook = TRUE;
                     }
 
-                    // TODO: Check 5 bytes
-                    if (!memcmp("\xE9", f_address, 2)) {
-                        MODULE mod = {
-                            entry->DllBase,
-                            entry->FullDllName.Buffer
-                        };
-                        hooks++;
-                        foundHook = TRUE;
+                    // Checks for JMPs, CALLs and RETs
+                    char *instruction = (char*)malloc(sizeof(char) * 16);
+                    memcpy(instruction, f_address, 10);
+
+                    switch (instruction[0]) {
+                        // TODO: Read JMP/Called address
+                        case '\xE9':
+                            printf("[Disassembler] jmp detected (%s [%p])\n\n", name, f_address);
+                            break;
+
+                        case '\xEB':
+                            printf("[Disassember] jmp detected (%s [%p])\n\n", name, f_address);
+                            break;
+
+                        case '\xE8':
+                            printf("[Disassember] call detected (%s [%p])\n\n", name, f_address);
+                            break;
+
+                        default:
+                            break;                        
                     }
+
+                    memset(&instruction, '\0', strlen(instruction));
                 }                
             }
 
