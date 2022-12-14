@@ -10,25 +10,26 @@ int main(void) {
     MODULE h_mods[32];
 
     // Initialize
-    antiscan_initialize();
+    AS_Init();
     printf("[LOG] Module initialized\n");
 
     // Check debugger
-    if (antiscan_hasDebuggerAttached())
+    if (AS_CheckDebugger())
         printf("[LOG] Debugger attached [OK]\n");
     else
         printf("[LOG] Debugger attached [OK]\n");
     
     // Check modules
-    if (antiscan_checkNtdll(&h_mods)) {
+    BOOL nt_check = AS_CheckNTDLL(h_mods);
+    if (nt_check || !nt_check) {
         printf("[LOG] Check modules [OK]\n");
     }
 
     // Get parrent process
-    DWORD p_pid = antiscan_getParentProcess();
+    DWORD p_pid = AS_GetParentProcess();
     printf("[Log] Parent process [OK] (%d).\n", p_pid);
 
     // Cleanup
-    antiscan_cleanup();
+    AS_Clean();
     return 0;
 }

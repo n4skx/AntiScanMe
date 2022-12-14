@@ -18,11 +18,11 @@ typedef struct {
 } MODULE; 
 
 // Global functions
-BOOL antiscan_initialize(void);
-BOOL antiscan_cleanup(void);
+BOOL AS_Init(void);
+BOOL AS_Clean(void);
 
-BOOL antiscan_hasDebuggerAttached(void);
+BOOL AS_CheckDebugger(void);
 
-BOOL antiscan_checkNtdll(void *modules);
-DWORD antiscan_getParentProcess(void);
+BOOL AS_CheckNTDLL(void *modules);
+DWORD AS_GetParentProcess(void);
 #endif

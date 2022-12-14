@@ -6,23 +6,23 @@
 TEB* p_teb;
 PEB* p_peb;
 
-BOOL antiscan_initialize(void) {
+BOOL AS_Init(void) {
     p_teb = NtCurrentTeb();
     p_peb = p_teb->ProcessEnvironmentBlock;
 }
 
-BOOL antiscan_cleanup(void) {
+BOOL AS_Clean(void) {
     // TODO: Cleanup
 }
 
-BOOL antiscan_hasDebuggerAttached(void) {
+BOOL AS_CheckDebugger(void) {
     if (p_peb->BeingDebugged)
         return TRUE;
 
     return FALSE;
 }
 
-DWORD antiscan_getParentProcess(void) {
+DWORD AS_GetParentProcess(void) {
     // Creates a snapshot of all processes running
     HANDLE h_snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
@@ -41,7 +41,7 @@ DWORD antiscan_getParentProcess(void) {
 }
 
 
-BOOL antiscan_checkNtdll(void *modules) {
+BOOL AS_CheckNTDLL(void *modules) {
     // Return value
     BOOL foundHook = FALSE;
 
