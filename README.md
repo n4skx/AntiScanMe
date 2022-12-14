@@ -13,5 +13,3 @@ Simple "PoC", bypass EDR/XDR looking at functions in ntdll
 
 ## Know issues
 > Make use of CreateToolhelp32Snapshot 
-
-> Not mapping file to memory
