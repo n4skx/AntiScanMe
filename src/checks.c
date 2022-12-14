@@ -1,21 +1,19 @@
+// Structures, etc etc...
 #include "checks.h"
+
+// Windows imports
+#include <winternl.h>
+#include <TlHelp32.h>
+
+// C Imports
 #include <stdio.h>
 #include <wchar.h>
 
-// Global variables
-TEB* p_teb;
-PEB* p_peb;
-
-BOOL AS_Init(void) {
-    p_teb = NtCurrentTeb();
-    p_peb = p_teb->ProcessEnvironmentBlock;
-}
-
-BOOL AS_Clean(void) {
-    // TODO: Cleanup
-}
-
 BOOL AS_CheckDebugger(void) {
+    // Prevent be called if not initialized
+    if (as_initialized == FALSE)
+        return NULL;
+
     if (p_peb->BeingDebugged)
         return TRUE;
 
@@ -42,6 +40,10 @@ DWORD AS_GetParentProcess(void) {
 
 
 BOOL AS_CheckNTDLL(void *modules) {
+    // Prevent be called if not initialized
+    if (as_initialized == FALSE)
+        return NULL;
+
     // Return value
     BOOL foundHook = FALSE;
 

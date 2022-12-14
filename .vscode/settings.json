@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "tlhelp32.h": "c",
-        "antiscan.h": "c"
-    }
+        "antiscan.h": "c",
+        "wchar.h": "c",
+        "windows.h": "c",
+        "vm_detect.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

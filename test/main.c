@@ -3,6 +3,8 @@
 
 // C Libraries
 #include <stdio.h>
+#include <stdint.h>
+
 #include "../src/antiscan.h"
 
 int main(void) {
@@ -28,6 +30,10 @@ int main(void) {
     // Get parrent process
     DWORD p_pid = AS_GetParentProcess();
     printf("[Log] Parent process [OK] (%d).\n", p_pid);
+
+    // VM detection techniques
+    BOOL cpuid = AS_CpuidCheck();
+    u_int64 sldt = AS_SldtCheck();
 
     // Cleanup
     AS_Clean();

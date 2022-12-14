@@ -1,10 +1,13 @@
 #ifndef CHECKS_H
 #define CHECKS_H
 
-// Includes
+// Imports
 #include <windows.h>
 #include <winternl.h>
-#include <TlHelp32.h>
+
+extern BOOL as_initialized;
+extern TEB* p_teb;
+extern PEB* p_peb;
 
 // Structures
 typedef struct {
@@ -18,8 +21,6 @@ typedef struct {
 } MODULE; 
 
 // Global functions
-BOOL AS_Init(void);
-BOOL AS_Clean(void);
 
 BOOL AS_CheckDebugger(void);
 
