@@ -1,28 +1,47 @@
 #include "checks.h"
 #include <stdio.h>
+#include <wchar.h>
 
-BOOL initialize(void) {
+// Global variables
+TEB* p_teb;
+PEB* p_peb;
+
+BOOL antiscan_initialize(void) {
     p_teb = NtCurrentTeb();
     p_peb = p_teb->ProcessEnvironmentBlock;
 }
 
-BOOL cleanup(void) {
+BOOL antiscan_cleanup(void) {
     // TODO: Cleanup
-
 }
 
-BOOL isDebugged(void) {
+BOOL antiscan_hasDebuggerAttached(void) {
     if (p_peb->BeingDebugged)
         return TRUE;
 
     return FALSE;
 }
 
-BOOL checkParentProcess(void) {
-    return FALSE;
+DWORD antiscan_getParentProcess(void) {
+    // Creates a snapshot of all processes running
+    HANDLE h_snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+    // Process entry
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(entry);
+
+    // Iterate over all processes from snapshot
+    while (Process32Next(h_snap, &entry)) {
+        if (entry.th32ProcessID == GetCurrentProcessId()) {
+            return entry.th32ParentProcessID;
+        }
+    }
+
+    return 0;
 }
 
-BOOL checkModules(void) {
+
+BOOL antiscan_checkNtdll(void *modules) {
     // Return value
     BOOL foundHook = FALSE;
 
@@ -31,64 +50,61 @@ BOOL checkModules(void) {
     LIST_ENTRY* next = head->Flink;
 
     for (; head != next; next = next->Flink) {
-
-        // 
+        // Get module entries
         LDR_DATA_TABLE_ENTRY* entry = CONTAINING_RECORD(next, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-        UNICODE_STRING* mod_name = (UNICODE_STRING*)((BYTE*)&entry->FullDllName + sizeof(UNICODE_STRING));
-        
-        printf("Test: %s\n", (char*)mod_name);
-        return;
-    }
 
-    //     if (RtlEqualUnicodeString(mod_name, &dllName, TRUE)) {
-    //         printf("[+] Ntdll found [Base Address: %p]\n", m_entry.modBaseAddr);
+        if (wcsstr(entry->FullDllName.Buffer, L"ntdll.dll") != NULL) {
+            // Clean user provided module array
+            int hooks = 0;
+            ZeroMemory(modules, sizeof(modules));
 
-    //         // Get Export Address Table
-    //         PIMAGE_DOS_HEADER p_dos = (PIMAGE_DOS_HEADER)m_entry.modBaseAddr;
-    //         PIMAGE_NT_HEADERS p_nt = (PIMAGE_NT_HEADERS)((DWORD_PTR)m_entry.modBaseAddr + p_dos->e_lfanew);
-    //         PIMAGE_DATA_DIRECTORY r_eat = &(p_nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT]);
-    //         PIMAGE_EXPORT_DIRECTORY p_eat = (PIMAGE_EXPORT_DIRECTORY)((DWORD_PTR)m_entry.modBaseAddr + r_eat->VirtualAddress);
+            // Get Export Address Table
+            PIMAGE_DOS_HEADER p_dos = (PIMAGE_DOS_HEADER)entry->DllBase;
+            PIMAGE_NT_HEADERS p_nt = (PIMAGE_NT_HEADERS)((DWORD_PTR)entry->DllBase + p_dos->e_lfanew);
+            PIMAGE_DATA_DIRECTORY r_eat = &(p_nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT]);
+            PIMAGE_EXPORT_DIRECTORY p_eat = (PIMAGE_EXPORT_DIRECTORY)((DWORD_PTR)entry->DllBase + r_eat->VirtualAddress);
 
-    //         // Iterate over EAT function names
-    //         DWORD n_names = p_eat->NumberOfNames;
-    //         PWORD p_ordinals = (PWORD)((DWORD_PTR)m_entry.modBaseAddr + p_eat->AddressOfNameOrdinals);
-    //         PDWORD eat = (PDWORD)((DWORD_PTR)m_entry.modBaseAddr + p_eat->AddressOfFunctions);
-    //         PDWORD eat_nameTable = (PDWORD)((DWORD_PTR)m_entry.modBaseAddr + p_eat->AddressOfNames);
+            // Iterate over EAT function names
+            DWORD n_names = p_eat->NumberOfNames;
+            PWORD p_ordinals = (PWORD)((DWORD_PTR)entry->DllBase + p_eat->AddressOfNameOrdinals);
+            PDWORD eat = (PDWORD)((DWORD_PTR)entry->DllBase + p_eat->AddressOfFunctions);
+            PDWORD eat_nameTable = (PDWORD)((DWORD_PTR)entry->DllBase + p_eat->AddressOfNames);
 
-    //         for (int i = 0; i < n_names; i++) {
-    //             const char *name = (char*)((DWORD_PTR)m_entry.modBaseAddr + eat_nameTable[i]);
+            for (int i = 0; i < n_names; i++) {
+                const char *name = (char*)((DWORD_PTR)entry->DllBase + eat_nameTable[i]);
 
-    //             // We only care about "kernel" functions
-    //             if (!strncmp(name, "Nt", 2) || !strncmp(name, "Zw", 2)) {
-    //                 printf("\t[~] Checking %s\n", name);
-
-    //                 // Get function address
-    //                 WORD f_ordinal = p_ordinals[i];
-    //                 PDWORD f_address = (PDWORD)((DWORD_PTR)m_entry.modBaseAddr + eat[f_ordinal]);
+                // We only care about "kernel" functions
+                if (!strncmp(name, "Nt", 2) || !strncmp(name, "Zw", 2)) {
+                    // Get function address
+                    WORD f_ordinal = p_ordinals[i];
+                    PDWORD f_address = (PDWORD)((DWORD_PTR)entry->DllBase + eat[f_ordinal]);
                     
-    //                 // Checks if function address is in same range that ntdll
-    //                 if (!memcmp(f_address, m_entry.modBaseAddr, 2)) {
-    //                     printf("\t\t| Address Hooked: yes\n");
-    //                     foundHook = TRUE;
-    //                 }
-    //                 else
-    //                     printf("\t\t| Address Hooked: no\n");
+                    // Checks if function address is in same range that ntdll
+                    if (!memcmp(f_address, entry->DllBase, 2)) {
+                        MODULE mod = {
+                            entry->DllBase,
+                            entry->FullDllName.Buffer
+                        };
+                        hooks++;
+                        foundHook = TRUE;
+                    }
 
-    //                 printf("\t\t| Function Address: %p\n", f_address);
+                    // TODO: Check 5 bytes
+                    if (!memcmp("\xE9", f_address, 2)) {
+                        MODULE mod = {
+                            entry->DllBase,
+                            entry->FullDllName.Buffer
+                        };
+                        hooks++;
+                        foundHook = TRUE;
+                    }
+                }                
+            }
 
-    //                 // TODO: Check 5 bytes
-    //                 if (!memcmp("\xE9", f_address, 2)) {
-    //                     printf("\t\t| Five Bytes: %#02X [Hooked!]\n\n");
-    //                     foundHook = TRUE;
-    //                 }
-    //                 else
-    //                     printf("\t\t| Five Bytes: %#02X [Not hooked]\n\n");
-
-    //             }                
-    //         }
-    //         break;
-    //     }
-    // }
+            return FALSE;
+            break;
+        }
+    }
 
     return foundHook;
 }

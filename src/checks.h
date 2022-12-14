@@ -6,16 +6,23 @@
 #include <winternl.h>
 #include <TlHelp32.h>
 
-// Global variables
-TEB* p_teb;
-PEB* p_peb;
+// Structures
+typedef struct {
+    char* name;
+    PDWORD address;
+} MODULE_FUNCTION;
+
+typedef struct {
+    LPVOID i_code;              // DLL image code
+    wchar_t* f_name;            // Full name, e.g: C:\Windows\System32\ntdll.dll
+} MODULE; 
 
 // Global functions
-BOOL initialize(void);
-BOOL cleanup(void);
+BOOL antiscan_initialize(void);
+BOOL antiscan_cleanup(void);
 
-BOOL isDebugged(void);
+BOOL antiscan_hasDebuggerAttached(void);
 
-BOOL checkModules(void);
-BOOL checkParentProcess(void);
+BOOL antiscan_checkNtdll(void *modules);
+DWORD antiscan_getParentProcess(void);
 #endif

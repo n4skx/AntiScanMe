@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "tlhelp32.h": "c"
+        "tlhelp32.h": "c",
+        "antiscan.h": "c"
     }
 }
