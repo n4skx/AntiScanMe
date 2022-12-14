@@ -6,7 +6,7 @@ Simple "PoC", bypass EDR/XDR looking at functions in ntdll
 | --- | --- |
 | Check IAT Hook | Not implemented |
 | Check Amsi Scan | Not implemented |
-| Check parent processes | Not implemented |
+| Check parent processes | Implemented |
 | Check if process is debugged | Implemented |
 | Check `jmp`,`call`,`ret` | Partially implemented |
 | Check if function address is in the same range than ntdll | Implemented |
