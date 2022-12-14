@@ -9,5 +9,8 @@
 
 u_int64 AS_SldtCheck(void);
 BOOL AS_CpuidCheck(void);
+BOOL AS_RdtscCheck(void);
+BOOL AS_SmswCheck(void);
+BOOL AS_StrCheck(void);
 
 #endif

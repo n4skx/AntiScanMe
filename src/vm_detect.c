@@ -55,26 +55,54 @@ static inline void cpuid_hv_vendor_00 (char *vendor){
     vendor[12] = 0x00;
 }
 
-BOOL cpu_rdtsc() {
+BOOL AS_RdtscCheck(void) {
 	int i;
 	unsigned long long avg = 0;
+
 	for (i = 0; i < 10; i++) {
 		avg = avg + rdtsc_diff();
 		Sleep(500);
 	}
-	avg = avg / 10;
+	
+    avg = avg / 10;
 	return (avg < 750 && avg > 0) ? FALSE : TRUE;
 }
 
 u_int64 AS_SldtCheck(void) {
-    // IDTR Register, see: Interrupt descriptor table
     long long int idtr;
 
-    // Use inline-assembly to call the sidt and get the idtr value
     __asm__ volatile ("sidt %0" : "=m" (idtr));
 
-    // Check idtr response
     return idtr;
+}
+
+BOOL AS_StrCheck(void) {
+    int tr;
+
+    
+    __asm__ volatile (
+        "str %0"
+        : "=m" (tr)
+    );
+
+    if (tr != 0xFF)
+        return TRUE;
+
+    return FALSE;
+}
+
+BOOL AS_SmswCheck(void) {
+    long int status;
+
+    __asm__ volatile (
+        "smsw %0"
+        : "=m" (status)
+    );
+
+    if (status != 0xFF)
+        return TRUE;
+    
+    return FALSE;
 }
 
 BOOL AS_CpuidCheck(void) {

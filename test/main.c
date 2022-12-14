@@ -32,7 +32,10 @@ int main(void) {
     printf("[Log] Parent process [OK] (%d).\n", p_pid);
 
     // VM detection techniques
+    BOOL str = AS_StrCheck();
+    BOOL smsw = AS_SmswCheck();
     BOOL cpuid = AS_CpuidCheck();
+    BOOL rdtsc = AS_RdtscCheck();
     u_int64 sldt = AS_SldtCheck();
 
     // Cleanup
