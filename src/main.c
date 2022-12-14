@@ -58,7 +58,7 @@ int main(int argc, void **argv) {
 
                     printf("\t\t| Function Address: %p\n", f_address);
 
-                    // Check 5 bytes
+                    // TODO: Check 5 bytes
                     if (!memcmp("\xE9", f_address, 2))
                         printf("\t\t| Five Bytes: %#02X [Hooked!]\n\n");
                     else
